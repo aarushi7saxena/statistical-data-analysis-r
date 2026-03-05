@@ -1,0 +1,180 @@
+---
+title: "Problem Set 2"
+author: "AarushiSaxena"
+date: "2026-03-01"
+output: html_document
+---
+## 1. Create a new Rmarkdown file. Save the file as “[your_name]_ProblemSet2”.
+This file is saved as **AarushiSaxena_ProblemSet2.Rmd** in:
+`/stor/work/FRI_321G_JD_Spring2026/StudentDirectories/AarushiSaxena`
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+```{r}
+#2. Load readr and tidyverse libraries (2pts)
+library(readr)
+library(tidyverse)
+```
+
+```{r}
+#3. Load the OT and TS data sets. (2pts)
+list.files("/stor/work/FRI_321G_JD_Spring2026/Exercises/")
+
+OT <- read_csv("/stor/work/FRI_321G_JD_Spring2026/Exercises/OT_StickleGene.csv", show_col_types = FALSE)
+TS <- read_csv("/stor/work/FRI_321G_JD_Spring2026/Exercises/TS_StickleGene.csv", show_col_types = FALSE)
+
+head(OT)
+head(TS)
+```
+```{r}
+#4. Calculate the number of genes in each data set (2pts)
+OT_gene_columns <- OT %>% select(where(is.numeric))
+TS_gene_columns <- TS %>% select(where(is.numeric))
+
+OT_num_genes <- ncol(OT_gene_columns)
+TS_num_genes <- ncol(TS_gene_columns)
+
+OT_num_genes
+TS_num_genes
+```
+```{r}
+# 5. Calculate the number of samples in each data set (2pts)
+OT_num_samples <- nrow(OT)
+TS_num_samples <- nrow(TS)
+
+OT_num_samples
+TS_num_samples
+```
+```{r}
+#6. Create origin variable and make a new summarized data frame (mean expression by population and sex). (8 pts)
+
+unique(OT$population)
+unique(TS$population)
+
+OT2 <- OT %>%
+  mutate(origin = case_when(
+    population %in% c("Blauta","Frosta","Galta","Hops") ~ "North America",
+    population %in% c("Lon","LittlaLon","Pristi","Thanga") ~ "Europe"
+  ))
+
+TS2 <- TS %>%
+  mutate(origin = case_when(
+    population %in% c("Blauta","Frosta","Galta","Hops") ~ "North America",
+    population %in% c("Lon","LittlaLon","Pristi","Thanga") ~ "Europe"
+  ))
+
+OT_summary <-OT2 %>% group_by(origin, population, sex) %>% 
+  summarise(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
+TS_summary <-TS2 %>% group_by(origin, population, sex) %>% 
+  summarise(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop")
+
+head(OT_summary)
+head(TS_summary)
+```
+```{r}
+#7. Make metadata data frames OT_metadata and TS_metadata (no gene expression columns). (6 pts)
+
+OT_metadata <- OT2 %>% select(where(~ !is.numeric(.)))
+TS_metadata <- TS2 %>% select(where(~ !is.numeric(.)))
+head(OT_metadata)
+head(TS_metadata)
+```
+```{r}
+#8. Filter the summarized data set (#6) for your target gene (Ensembl ID from PS1). (8 pts)
+
+target_gene <- "ENSGACG00000003002"
+
+
+OT_summary_long <- OT_summary %>%
+  pivot_longer(cols = where(is.numeric),
+               names_to = "ensembl_id",
+               values_to = "mean_expression")
+
+TS_summary_long <- TS_summary %>%
+  pivot_longer(cols = where(is.numeric),
+               names_to = "ensembl_id",
+               values_to = "mean_expression")
+
+
+OT_target <- OT_summary_long %>% filter(ensembl_id == target_gene)
+TS_target <- TS_summary_long %>% filter(ensembl_id == target_gene)
+
+OT_target
+TS_target
+
+
+
+```
+```{r}
+#9 Using a paired boxplot, plot your gene's expression for each population paired by sex (8pts)
+
+OT_plot_data <- OT2 %>% 
+  pivot_longer(cols = where(is.numeric), 
+               names_to = "ensembl_id",
+               values_to = "expression") %>%
+  filter(ensembl_id == target_gene)
+
+ggplot(OT_plot_data, aes(x = population, y = expression, fill = sex)) + geom_boxplot(position = position_dodge(width = 0.8))+ labs(title = paste("OT: ", target_gene, "Expression by Population and Sex"), x = "Population", y = "Expression")+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+TS_plot_data <- TS2 %>%
+  pivot_longer(cols = where(is.numeric),
+               names_to = "ensembl_id",
+               values_to = "expression") %>%
+  filter(ensembl_id == target_gene)
+
+ggplot(TS_plot_data, aes(x = population, y = expression, fill = sex)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) +
+  labs(title = paste("TS:", target_gene, "Expression by Population and Sex"),
+       x = "Population",
+       y = "Expression") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+unique(OT$sex)
+unique(TS$sex)
+```
+
+```{r}
+#10 Summaroze by sex/populationm pivot wider, then scatter plot Female vs Male colored by population (10 pts)
+
+
+OT_wide <- OT_target %>%
+  select(population, sex, mean_expression) %>%
+  pivot_wider(names_from = sex, values_from = mean_expression)
+
+TS_wide <- TS_target %>%
+  select(population, sex, mean_expression) %>%
+  pivot_wider(names_from = sex, values_from = mean_expression)
+
+OT_wide
+TS_wide
+
+OT_wide <- OT_wide %>%
+  mutate(
+    M = as.numeric(M),
+    F = as.numeric(F)
+  )
+
+TS_wide <- TS_wide %>%
+  mutate(
+    M = as.numeric(M),
+    F = as.numeric(F)
+  )
+
+ggplot(OT_wide, aes(x = M, y = F, color = population)) +
+  geom_point(size = 3) +
+  labs(title = paste("OT:", target_gene, "Female vs Male Mean Expression"),
+       x = "Male mean expression",
+       y = "Female mean expression")
+
+ggplot(TS_wide, aes(x = M, y = F, color = population)) +
+  geom_point(size = 3) +
+  labs(title = paste("TS:", target_gene, "Female vs Male Mean Expression"),
+       x = "Male mean expression",
+       y = "Female mean expression")
+```
+
