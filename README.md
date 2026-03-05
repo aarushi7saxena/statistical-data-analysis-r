@@ -1,5 +1,7 @@
 # Statistical Data Analysis in R
 
+**Skills Demonstrated:** R • Statistical Analysis • Data Manipulation • Tidyverse • Reproducible Research • Quantitative Modeling
+
 ## Overview
 This project performs quantitative analysis on biological population datasets using **R** and the **tidyverse** ecosystem. The analysis applies statistical programming techniques to clean, transform, and summarize structured data across populations and demographic groupings.
 
@@ -56,6 +58,12 @@ project-folder/
 - Grouped aggregation and summary statistics
 - Reproducible analytical reporting
 - Quantitative interpretation of structured datasets
+
+## How to View the Project
+
+To view the full analysis and results, open the HTML report included in this repository:
+
+**population-data-analysis.html**
 
 ---
 
