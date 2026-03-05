@@ -65,5 +65,7 @@ To view the full analysis and results, open the HTML report included in this rep
 
 **population-data-analysis.html**
 
+![Analysis Output](analysis-output.png)
+
 ---
 
